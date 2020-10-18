@@ -23,13 +23,17 @@ class RevolvingTurtle:
 
     def update_pose(self, msg):
         self.pose = msg
-        self.pose.x = round(msg.x, 4)
-        self.pose.y = round(msg.y, 4)
-        self.pose.theta = round(msg.theta, 4)
+        self.pose.x = msg.x
+        self.pose.y = msg.y
+        self.pose.theta = msg.theta
 
     def dist_from_init(self, init_time):
         final_time = float(rospy.Time.now().to_sec())
-        return self.twist.linear.x * (final_time - init_time - 0.2)
+        bias = 0.2
+        time_taken = final_time - init_time
+        if time_taken > bias :
+            time_taken -= bias
+        return self.twist.linear.x * time_taken
 
     def revolve(self):
         freq = 0.5
@@ -38,25 +42,29 @@ class RevolvingTurtle:
         angular_speed = 2 * math.pi * freq
         linear_speed = angular_speed * radius
 
-        init_time = float(rospy.Time.now().to_sec())
-        distance = 0
-        circumference = 2 * math.pi * radius
-        rospy.loginfo('Circumference = ' + str(round(circumference, 2)))
-
-        self.twist.linear.x = round(linear_speed, 4)
+        self.twist.linear.x = linear_speed
         self.twist.linear.y = 0
         self.twist.linear.z = 0
 
         self.twist.angular.x = 0
         self.twist.angular.y = 0
-        self.twist.angular.z = round(angular_speed, 4)
+        self.twist.angular.z = angular_speed
 
-        while distance <= circumference :
+        distance = 0
+        circumference = 2 * math.pi * radius
+        rospy.loginfo('Circumference = ' + str(round(circumference, 7)))
+        init_time = float(rospy.Time.now().to_sec())
+
+        while 1 :
             distance = self.dist_from_init(init_time)
-            rospy.loginfo('Revolving...\n' + 'Distance = '
-                                + str(round(distance, 5)))
-            self.velocity_publisher.publish(self.twist)
-            self.rate.sleep()
+            if distance < circumference :
+                rospy.loginfo('Revolving...\n' + 'Distance = '
+                                    + str(round(distance, 7)))
+                self.velocity_publisher.publish(self.twist)
+                self.rate.sleep()
+            else :
+                rospy.loginfo('Completed one revolution')
+                break
 
         self.twist.linear.x = 0
         self.twist.angular.z = 0
