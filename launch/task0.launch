@@ -1,0 +1,8 @@
+<launch>
+  <group ns="turtlesim">
+    <node pkg="turtlesim" type="turtlesim_node" name="turtlesim_node"/>
+  </group>
+  <group ns="pkg_task0">
+    <node pkg="pkg_task0" type="node_turtle_revolve.py" name="turtlerev" output="screen"/>
+  </group>
+</launch>
